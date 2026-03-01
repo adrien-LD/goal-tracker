@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 COMPOSE_FILE="${APP_ROOT}/deploy/docker-compose.yml"
-ENV_FILE="$(cd "${APP_ROOT}/.." && pwd)/.env"
+ENV_FILE="${APP_ROOT}/.env"
 BACKUP_SCRIPT="${APP_ROOT}/deploy/backup-sqlite.sh"
 CRON_SCHEDULE="${BACKUP_CRON:-0 3 * * *}"
 CRON_LOG_FILE="/opt/goal-tracker/backups/backup.log"

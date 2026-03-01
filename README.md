@@ -33,7 +33,7 @@ sudo firewall-cmd --permanent --add-port=3000/tcp
 sudo firewall-cmd --reload
 ```
 
-Create server runtime env file at `/opt/goal-tracker/.env`:
+Create server runtime env file at `/opt/goal-tracker/app/.env`:
 
 ```bash
 NODE_ENV=production
