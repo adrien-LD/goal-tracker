@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-breeze text-ink antialiased;
+}
+
+input, textarea, select {
+  @apply bg-white;
+}
+
+button:disabled {
+  @apply opacity-60 cursor-not-allowed;
+}
