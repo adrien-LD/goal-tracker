@@ -39,6 +39,7 @@ Create server runtime env file at `/opt/goal-tracker/app/.env`:
 NODE_ENV=production
 PORT=3000
 DATABASE_URL=file:/data/dev.db
+SESSION_COOKIE_SECURE=false
 ```
 
 ### 2) GitHub Actions secrets

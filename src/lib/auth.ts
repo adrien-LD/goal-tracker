@@ -5,6 +5,13 @@ import { prisma } from "@/lib/db";
 const SESSION_COOKIE = "goal_session";
 const SESSION_DAYS = 30;
 
+function shouldUseSecureCookie() {
+  const configured = process.env.SESSION_COOKIE_SECURE;
+  if (configured === "true") return true;
+  if (configured === "false") return false;
+  return process.env.NODE_ENV === "production";
+}
+
 export async function hashPassword(password: string) {
   const salt = await bcrypt.genSalt(10);
   return bcrypt.hash(password, salt);
@@ -17,6 +24,7 @@ export async function verifyPassword(password: string, hash: string) {
 export async function createSession(userId: string) {
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + SESSION_DAYS);
+  const secureCookie = shouldUseSecureCookie();
 
   const session = await prisma.session.create({
     data: {
@@ -31,7 +39,7 @@ export async function createSession(userId: string) {
     sameSite: "lax",
     path: "/",
     expires: expiresAt,
-    secure: process.env.NODE_ENV === "production",
+    secure: secureCookie,
   });
 
   return session;
@@ -40,6 +48,7 @@ export async function createSession(userId: string) {
 export async function clearSession() {
   const cookieStore = cookies();
   const sessionId = cookieStore.get(SESSION_COOKIE)?.value;
+  const secureCookie = shouldUseSecureCookie();
   if (sessionId) {
     await prisma.session.deleteMany({
       where: { id: sessionId },
@@ -50,7 +59,7 @@ export async function clearSession() {
     sameSite: "lax",
     path: "/",
     expires: new Date(0),
-    secure: process.env.NODE_ENV === "production",
+    secure: secureCookie,
   });
 }
 
