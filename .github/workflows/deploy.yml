@@ -81,13 +81,31 @@ jobs:
         run: |
           set -euo pipefail
           rsync -az --delete \
+            --filter "P .env" \
             --exclude ".git/" \
+            --exclude ".env" \
             --exclude "node_modules/" \
             --exclude ".next/" \
             --exclude "prisma/dev.db" \
             --exclude "prisma/dev.db-journal" \
             -e "ssh -p ${DEPLOY_PORT}" \
             ./ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/"
+
+      - name: Verify remote deployment files
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOST}" "
+            set -euo pipefail
+            test -d '${DEPLOY_PATH}'
+            test -d '${DEPLOY_PATH}/deploy'
+            ls -la '${DEPLOY_PATH}' | sed -n '1,120p'
+            ls -la '${DEPLOY_PATH}/deploy' | sed -n '1,120p'
+            if [[ ! -f '${DEPLOY_PATH}/.env' ]]; then
+              echo 'missing file: ${DEPLOY_PATH}/.env' >&2
+              exit 1
+            fi
+          "
 
       - name: Run remote deploy script
         shell: bash
