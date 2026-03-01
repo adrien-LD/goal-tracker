@@ -44,13 +44,29 @@ jobs:
         run: |
           set -euo pipefail
           install -m 700 -d ~/.ssh
-          if grep -q '\\n' <<<"${DEPLOY_SSH_KEY}"; then
-            printf '%b' "${DEPLOY_SSH_KEY}" | tr -d '\r' > ~/.ssh/id_ed25519
+          RAW_KEY="${DEPLOY_SSH_KEY}"
+          if grep -q '\\n' <<<"${RAW_KEY}"; then
+            RAW_KEY="$(printf '%b' "${RAW_KEY}")"
+          fi
+          RAW_KEY="$(printf '%s' "${RAW_KEY}" | tr -d '\r')"
+
+          if grep -Eq 'BEGIN [A-Z0-9 ]*PRIVATE KEY' <<<"${RAW_KEY}"; then
+            printf '%s\n' "${RAW_KEY}" > ~/.ssh/id_ed25519
           else
-            printf '%s' "${DEPLOY_SSH_KEY}" | tr -d '\r' > ~/.ssh/id_ed25519
+            DECODED_KEY="$(printf '%s' "${RAW_KEY}" | base64 -d 2>/dev/null || true)"
+            DECODED_KEY="$(printf '%s' "${DECODED_KEY}" | tr -d '\r')"
+            if grep -Eq 'BEGIN [A-Z0-9 ]*PRIVATE KEY' <<<"${DECODED_KEY}"; then
+              printf '%s\n' "${DECODED_KEY}" > ~/.ssh/id_ed25519
+            else
+              echo "DEPLOY_SSH_KEY is invalid. Provide a full private key or base64-encoded private key." >&2
+              exit 1
+            fi
           fi
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keygen -yf ~/.ssh/id_ed25519 >/dev/null
+          if ! ssh-keygen -yf ~/.ssh/id_ed25519 >/dev/null 2>&1; then
+            echo "DEPLOY_SSH_KEY cannot be parsed. Ensure it is an unencrypted private key." >&2
+            exit 1
+          fi
           ssh-keyscan -p "${DEPLOY_PORT}" -H "${DEPLOY_HOST}" >> ~/.ssh/known_hosts
 
       - name: Ensure server directories
