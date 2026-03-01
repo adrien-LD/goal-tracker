@@ -2,16 +2,63 @@
 
 A Next.js + SQLite goal management app with daily check-ins, multi-goal tracking, and bilingual UI (中文/EN).
 
-## Setup
+## Local Setup
 
 ```bash
-npm install
-npx prisma migrate dev --name init
+cp .env.example .env
+pnpm install
+npx prisma db push
 npm run dev
 ```
 
 ## Notes
 
-- Prisma uses `prisma/dev.db` (SQLite).
+- Prisma uses `DATABASE_URL` from environment variables.
 - Sessions are stored server-side with HttpOnly cookies.
 - Goals generate daily check-ins for the full date range at creation time.
+
+## Production Deployment (CentOS/RHEL/Alma)
+
+### 1) Server bootstrap
+
+```bash
+sudo dnf -y install dnf-plugins-core
+sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+sudo dnf -y install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin cronie rsync
+sudo systemctl enable --now docker
+sudo systemctl enable --now crond
+sudo mkdir -p /opt/goal-tracker/app /opt/goal-tracker/backups
+sudo chown -R "$USER":"$USER" /opt/goal-tracker
+sudo firewall-cmd --permanent --add-port=3000/tcp
+sudo firewall-cmd --reload
+```
+
+Create server runtime env file at `/opt/goal-tracker/.env`:
+
+```bash
+NODE_ENV=production
+PORT=3000
+DATABASE_URL=file:/data/dev.db
+```
+
+### 2) GitHub Actions secrets
+
+Add these repository secrets:
+
+- `DEPLOY_HOST`
+- `DEPLOY_PORT`
+- `DEPLOY_USER`
+- `DEPLOY_SSH_KEY`
+- `DEPLOY_PATH` (set to `/opt/goal-tracker/app`)
+
+### 3) Auto deploy behavior
+
+On every push to `main`, workflow `.github/workflows/deploy.yml` will:
+
+1. Sync code to server via SSH + rsync.
+2. Run `deploy/remote-deploy.sh` on server.
+3. Rebuild and restart container with `docker compose`.
+4. Apply schema with `npx prisma db push`.
+5. Ensure daily SQLite backup cron exists (`deploy/backup-sqlite.sh`).
+
+Service endpoint: `http://<server-ip>:3000`
