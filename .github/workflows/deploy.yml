@@ -44,8 +44,13 @@ jobs:
         run: |
           set -euo pipefail
           install -m 700 -d ~/.ssh
-          printf '%s\n' "${DEPLOY_SSH_KEY}" > ~/.ssh/id_ed25519
+          if grep -q '\\n' <<<"${DEPLOY_SSH_KEY}"; then
+            printf '%b' "${DEPLOY_SSH_KEY}" | tr -d '\r' > ~/.ssh/id_ed25519
+          else
+            printf '%s' "${DEPLOY_SSH_KEY}" | tr -d '\r' > ~/.ssh/id_ed25519
+          fi
           chmod 600 ~/.ssh/id_ed25519
+          ssh-keygen -yf ~/.ssh/id_ed25519 >/dev/null
           ssh-keyscan -p "${DEPLOY_PORT}" -H "${DEPLOY_HOST}" >> ~/.ssh/known_hosts
 
       - name: Ensure server directories
