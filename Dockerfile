@@ -9,10 +9,12 @@ RUN corepack enable
 
 FROM base AS deps
 
+ENV DATABASE_URL="file:./prisma/dev.db"
+
 COPY package.json pnpm-lock.yaml ./
 COPY prisma ./prisma
 
-RUN pnpm install --no-frozen-lockfile
+RUN pnpm install --no-frozen-lockfile && pnpm prisma generate
 
 FROM base AS builder
 
