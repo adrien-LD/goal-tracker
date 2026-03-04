@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useI18n } from "@/components/i18n";
 import { todayLocal } from "@/lib/date";
+import ProgressRing from "@/components/ProgressRing";
 
 type CheckIn = {
   id: string;
@@ -121,33 +122,42 @@ export default function CheckinsPage() {
                   className="mt-1 h-5 w-5 cursor-pointer rounded border-cloud text-ink accent-ink focus:ring-ink disabled:cursor-not-allowed disabled:opacity-50"
                   aria-label={`${t("navCheckins")}: ${checkIn.goal.title}`}
                 />
-                <div className="flex-1">
-                  <div
-                    className={`text-base font-semibold ${
-                      checkIn.completed ? "text-slate-400 line-through" : "text-ink"
-                    }`}
-                  >
-                    {checkIn.goal.title}
-                  </div>
-                  <div className="text-sm text-slate-500">
-                    {checkIn.goal.description || "-"}
-                  </div>
-                  <div className="mt-1 text-xs text-slate-500">
-                    {t("goalProgress")}: {checkIn.goal.completedCount}/
-                    {checkIn.goal.targetCount}
-                  </div>
-                  <div className="mt-2 flex items-center gap-2 text-xs text-slate-400">
-                    <span>{checkIn.date}</span>
-                    <span
-                      className={`rounded-full px-2 py-0.5 ${
-                        checkIn.completed
-                          ? "border border-mint bg-mint/10 text-mint"
-                          : "border border-cloud bg-sand text-slate-500"
+                <div className="flex flex-1 items-start justify-between gap-3">
+                  <div className="flex-1">
+                    <div
+                      className={`text-base font-semibold ${
+                        checkIn.completed ? "text-slate-400 line-through" : "text-ink"
                       }`}
                     >
-                      {checkIn.completed ? t("statusComplete") : t("statusIncomplete")}
-                    </span>
+                      {checkIn.goal.title}
+                    </div>
+                    <div className="text-sm text-slate-500">
+                      {checkIn.goal.description || "-"}
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500">
+                      {t("goalProgress")}: {checkIn.goal.completedCount}/
+                      {checkIn.goal.targetCount}
+                    </div>
+                    <div className="mt-2 flex items-center gap-2 text-xs text-slate-400">
+                      <span>{checkIn.date}</span>
+                      <span
+                        className={`rounded-full px-2 py-0.5 ${
+                          checkIn.completed
+                            ? "border border-mint bg-mint/10 text-mint"
+                            : "border border-cloud bg-sand text-slate-500"
+                        }`}
+                      >
+                        {checkIn.completed ? t("statusComplete") : t("statusIncomplete")}
+                      </span>
+                    </div>
                   </div>
+                  <ProgressRing
+                    completed={checkIn.goal.completedCount}
+                    target={checkIn.goal.targetCount}
+                    size={36}
+                    strokeWidth={3}
+                    label={`${t("goalProgress")}: ${checkIn.goal.completedCount}/${checkIn.goal.targetCount}`}
+                  />
                 </div>
               </label>
             </div>
