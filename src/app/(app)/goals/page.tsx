@@ -7,16 +7,27 @@ type Goal = {
   id: string;
   title: string;
   description: string;
+  targetCount: number;
   startDate: string;
   endDate: string;
 };
 
+const DEFAULT_TARGET_COUNT = "1";
+const TARGET_COUNT_MIN = 1;
+const TARGET_COUNT_STEP = 1;
+
 const emptyForm = {
   title: "",
   description: "",
+  targetCount: DEFAULT_TARGET_COUNT,
   startDate: "",
   endDate: "",
 };
+
+function isValidTargetCount(value: string) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed >= TARGET_COUNT_MIN;
+}
 
 export default function GoalsPage() {
   const { t } = useI18n();
@@ -52,13 +63,19 @@ export default function GoalsPage() {
       return;
     }
 
+    if (!isValidTargetCount(form.targetCount)) {
+      setMessage(t("errorTargetCount"));
+      return;
+    }
+
     setLoading(true);
     try {
+      const payload = { ...form, targetCount: Number(form.targetCount) };
       const response = await fetch(`/api/goals${editingId ? `/${editingId}` : ""}`,
         {
           method: editingId ? "PATCH" : "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
+          body: JSON.stringify(payload),
         }
       );
 
@@ -84,6 +101,7 @@ export default function GoalsPage() {
     setForm({
       title: goal.title,
       description: goal.description,
+      targetCount: String(goal.targetCount),
       startDate: goal.startDate,
       endDate: goal.endDate,
     });
@@ -135,6 +153,9 @@ export default function GoalsPage() {
                   <div>
                     <div className="text-base font-semibold text-ink">{goal.title}</div>
                     <div className="text-sm text-slate-500">{goal.description || "-"}</div>
+                    <div className="mt-1 text-sm text-slate-500">
+                      {t("goalTargetCount")}: {goal.targetCount}
+                    </div>
                     <div className="mt-2 text-xs text-slate-400">
                       {goal.startDate} - {goal.endDate}
                     </div>
@@ -181,6 +202,17 @@ export default function GoalsPage() {
               onChange={(event) => handleChange("description", event.target.value)}
               className="mt-2 min-h-[90px] w-full rounded-xl border border-cloud px-4 py-2 text-ink outline-none focus:border-ink"
               placeholder={t("labelDescription")}
+            />
+          </label>
+          <label className="block text-sm font-medium text-slate-600">
+            {t("labelTargetCount")}
+            <input
+              type="number"
+              min={TARGET_COUNT_MIN}
+              step={TARGET_COUNT_STEP}
+              value={form.targetCount}
+              onChange={(event) => handleChange("targetCount", event.target.value)}
+              className="mt-2 w-full rounded-xl border border-cloud px-4 py-2 text-ink outline-none focus:border-ink"
             />
           </label>
           <div className="grid gap-4 md:grid-cols-2">

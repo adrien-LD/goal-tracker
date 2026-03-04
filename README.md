@@ -17,6 +17,20 @@ npm run dev
 - Sessions are stored server-side with HttpOnly cookies.
 - Goals generate daily check-ins for the full date range at creation time.
 
+## Existing Data Backfill (`targetCount`)
+
+After schema changes are applied with `npx prisma db push`, run this once for old data:
+
+```bash
+npx prisma db execute --stdin <<'SQL'
+UPDATE "Goal"
+SET "targetCount" = CAST((julianday(date("endDate")) - julianday(date("startDate")) + 1) AS INTEGER)
+WHERE "targetCount" IS NULL;
+SQL
+```
+
+`deploy/remote-deploy.sh` already runs this backfill automatically on each deployment.
+
 ## Production Deployment (CentOS/RHEL/Alma)
 
 ### 1) Server bootstrap

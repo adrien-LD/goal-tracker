@@ -36,6 +36,11 @@ mkdir -p /opt/goal-tracker/backups
 docker compose -f "${COMPOSE_FILE}" down
 docker compose -f "${COMPOSE_FILE}" up -d --build
 docker compose -f "${COMPOSE_FILE}" exec -T app npx prisma db push
+docker compose -f "${COMPOSE_FILE}" exec -T app npx prisma db execute --stdin <<'SQL'
+UPDATE "Goal"
+SET "targetCount" = CAST((julianday(date("endDate")) - julianday(date("startDate")) + 1) AS INTEGER)
+WHERE "targetCount" IS NULL;
+SQL
 docker compose -f "${COMPOSE_FILE}" ps
 
 CURRENT_CRON="$(crontab -l 2>/dev/null || true)"

@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { formatDateLocal, listDates, parseDateLocal } from "@/lib/date";
+import {
+  InvalidTargetCountError,
+  parseTargetCount,
+} from "@/lib/goal-target-count";
+
+const INVALID_TARGET_COUNT_MESSAGE = "Invalid target count";
 
 export async function PATCH(
   request: Request,
@@ -23,6 +29,7 @@ export async function PATCH(
     const description = String(body.description || "").trim();
     const startDate = String(body.startDate || "");
     const endDate = String(body.endDate || "");
+    const targetCount = parseTargetCount(body.targetCount);
 
     if (!title || !startDate || !endDate) {
       return NextResponse.json(
@@ -57,7 +64,13 @@ export async function PATCH(
     await prisma.$transaction(async (tx) => {
       await tx.goal.update({
         where: { id: goalId },
-        data: { title, description, startDate: start, endDate: end },
+        data: {
+          title,
+          description,
+          targetCount,
+          startDate: start,
+          endDate: end,
+        },
       });
 
       if (toAdd.length) {
@@ -78,11 +91,18 @@ export async function PATCH(
         id: goalId,
         title,
         description,
+        targetCount,
         startDate: formatDateLocal(start),
         endDate: formatDateLocal(end),
       },
     });
   } catch (error) {
+    if (error instanceof InvalidTargetCountError) {
+      return NextResponse.json(
+        { message: INVALID_TARGET_COUNT_MESSAGE },
+        { status: 400 }
+      );
+    }
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }

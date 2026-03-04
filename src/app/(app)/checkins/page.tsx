@@ -12,8 +12,12 @@ type CheckIn = {
     id: string;
     title: string;
     description: string;
+    targetCount: number;
+    completedCount: number;
   };
 };
+
+const COMPLETED_COUNT_DELTA = 1;
 
 export default function CheckinsPage() {
   const { t } = useI18n();
@@ -51,7 +55,18 @@ export default function CheckinsPage() {
       setCheckIns((prev) =>
         prev.map((item) =>
           item.id === checkIn.id
-            ? { ...item, completed: !checkIn.completed }
+            ? {
+                ...item,
+                completed: !checkIn.completed,
+                goal: {
+                  ...item.goal,
+                  completedCount:
+                    item.goal.completedCount +
+                    (checkIn.completed
+                      ? -COMPLETED_COUNT_DELTA
+                      : COMPLETED_COUNT_DELTA),
+                },
+              }
             : item
         )
       );
@@ -116,6 +131,10 @@ export default function CheckinsPage() {
                   </div>
                   <div className="text-sm text-slate-500">
                     {checkIn.goal.description || "-"}
+                  </div>
+                  <div className="mt-1 text-xs text-slate-500">
+                    {t("goalProgress")}: {checkIn.goal.completedCount}/
+                    {checkIn.goal.targetCount}
                   </div>
                   <div className="mt-2 flex items-center gap-2 text-xs text-slate-400">
                     <span>{checkIn.date}</span>

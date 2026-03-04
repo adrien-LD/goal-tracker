@@ -2,6 +2,35 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { formatDateLocal, listDates, parseDateLocal } from "@/lib/date";
+import {
+  InvalidTargetCountError,
+  parseTargetCount,
+  resolveGoalTargetCount,
+} from "@/lib/goal-target-count";
+
+const INVALID_TARGET_COUNT_MESSAGE = "Invalid target count";
+
+function mapGoal(goal: {
+  id: string;
+  title: string;
+  description: string;
+  targetCount: number | null;
+  startDate: Date;
+  endDate: Date;
+}) {
+  return {
+    id: goal.id,
+    title: goal.title,
+    description: goal.description,
+    targetCount: resolveGoalTargetCount({
+      targetCount: goal.targetCount,
+      startDate: goal.startDate,
+      endDate: goal.endDate,
+    }),
+    startDate: formatDateLocal(goal.startDate),
+    endDate: formatDateLocal(goal.endDate),
+  };
+}
 
 export async function GET() {
   try {
@@ -12,13 +41,7 @@ export async function GET() {
     });
 
     return NextResponse.json({
-      goals: goals.map((goal) => ({
-        id: goal.id,
-        title: goal.title,
-        description: goal.description,
-        startDate: formatDateLocal(goal.startDate),
-        endDate: formatDateLocal(goal.endDate),
-      })),
+      goals: goals.map(mapGoal),
     });
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
@@ -39,6 +62,7 @@ export async function POST(request: Request) {
     const description = String(body.description || "").trim();
     const startDate = String(body.startDate || "");
     const endDate = String(body.endDate || "");
+    const targetCount = parseTargetCount(body.targetCount);
 
     if (!title || !startDate || !endDate) {
       return NextResponse.json(
@@ -61,6 +85,7 @@ export async function POST(request: Request) {
         userId: user.id,
         title,
         description,
+        targetCount,
         startDate: start,
         endDate: end,
       },
@@ -77,15 +102,15 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({
-      goal: {
-        id: goal.id,
-        title: goal.title,
-        description: goal.description,
-        startDate: formatDateLocal(goal.startDate),
-        endDate: formatDateLocal(goal.endDate),
-      },
+      goal: mapGoal(goal),
     });
   } catch (error) {
+    if (error instanceof InvalidTargetCountError) {
+      return NextResponse.json(
+        { message: INVALID_TARGET_COUNT_MESSAGE },
+        { status: 400 }
+      );
+    }
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
