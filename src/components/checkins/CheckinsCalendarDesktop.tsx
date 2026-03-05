@@ -6,7 +6,7 @@ import type { CalendarDayModel, CheckIn } from "@/components/checkins/types";
 import { getMonthLabel, isSameDate } from "@/lib/calendar";
 import { parseDateLocal } from "@/lib/date";
 
-const MAX_ITEMS_PER_DAY = 3;
+const MAX_ITEMS_PER_DAY = 5;
 const MONTH_STEP = 1;
 
 type CheckinsCalendarDesktopProps = {
@@ -18,7 +18,6 @@ type CheckinsCalendarDesktopProps = {
   onSelectDate: (date: string) => void;
   onToday: () => void;
   onToggleCheckIn: (checkIn: CheckIn) => void;
-  selectedDate: string;
   updatingId: string | null;
 };
 
@@ -40,7 +39,6 @@ type CalendarDayCellProps = {
   onSelectDate: (date: string) => void;
   onToggleCheckIn: (checkIn: CheckIn) => void;
   setExpandedDate: (date: string | null) => void;
-  selectedDate: string;
   updatingId: string | null;
 };
 
@@ -107,7 +105,6 @@ function CalendarDayCell({
   expandedDate,
   onSelectDate,
   onToggleCheckIn,
-  selectedDate,
   setExpandedDate,
   updatingId,
 }: CalendarDayCellProps) {
@@ -117,20 +114,30 @@ function CalendarDayCell({
   const visibleItems = dayItems.slice(0, MAX_ITEMS_PER_DAY);
   const hiddenItems = dayItems.slice(MAX_ITEMS_PER_DAY);
   const isExpanded = expandedDate === day.date;
-  const isSelected = isSameDate(dayDate, parseDateLocal(selectedDate));
+  const isToday = isSameDate(dayDate, new Date());
 
   return (
     <article
-      className={`relative min-h-36 border border-cloud p-2 ${
+      className={`relative min-h-44 border border-cloud p-3 ${
         day.inCurrentMonth ? "bg-white" : "bg-slate-50"
-      } ${isSelected ? "ring-2 ring-ink/15" : ""}`}
+      }`}
       onClick={(event) => {
         event.stopPropagation();
         onSelectDate(day.date);
       }}
     >
-      <div className={`text-right text-sm ${day.inCurrentMonth ? "text-ink" : "text-slate-400"}`}>
-        {getDayLabel(dayDate, day.inCurrentMonth, locale)}
+      <div className="flex justify-end">
+        <span
+          className={`inline-flex h-8 min-w-8 items-center justify-center rounded-full px-2 text-base font-semibold ${
+            isToday
+              ? "bg-[#e86a5f] text-white"
+              : day.inCurrentMonth
+                ? "text-ink"
+                : "text-slate-400"
+          }`}
+        >
+          {getDayLabel(dayDate, day.inCurrentMonth, locale)}
+        </span>
       </div>
       <div className="mt-2 space-y-1">
         {visibleItems.map((checkIn) => (
@@ -177,7 +184,6 @@ export default function CheckinsCalendarDesktop({
   onSelectDate,
   onToday,
   onToggleCheckIn,
-  selectedDate,
   updatingId,
 }: CheckinsCalendarDesktopProps) {
   const { locale, t } = useI18n();
@@ -248,7 +254,6 @@ export default function CheckinsCalendarDesktop({
               expandedDate={expandedDate}
               onSelectDate={onSelectDate}
               onToggleCheckIn={onToggleCheckIn}
-              selectedDate={selectedDate}
               setExpandedDate={setExpandedDate}
               updatingId={updatingId}
             />

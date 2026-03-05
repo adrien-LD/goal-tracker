@@ -172,7 +172,6 @@ export default function CheckinsPage() {
           setDisplayMonth(parseDateLocal(today));
         }}
         onToggleCheckIn={toggleCheckin}
-        selectedDate={selectedDate}
         updatingId={updatingId}
       />
       <CheckinsListMobile
