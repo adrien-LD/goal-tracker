@@ -7,17 +7,25 @@ import {
   parseTargetCount,
   resolveGoalTargetCount,
 } from "@/lib/goal-target-count";
+import { getCompletedCountMap } from "@/lib/goal-progress";
 
 const INVALID_TARGET_COUNT_MESSAGE = "Invalid target count";
 
-function mapGoal(goal: {
+type GoalRecord = {
   id: string;
   title: string;
   description: string;
   targetCount: number | null;
   startDate: Date;
   endDate: Date;
-}) {
+};
+
+type MapGoalOptions = {
+  goal: GoalRecord;
+  completedCount: number;
+};
+
+function mapGoal({ goal, completedCount }: MapGoalOptions) {
   return {
     id: goal.id,
     title: goal.title,
@@ -27,6 +35,7 @@ function mapGoal(goal: {
       startDate: goal.startDate,
       endDate: goal.endDate,
     }),
+    completedCount,
     startDate: formatDateLocal(goal.startDate),
     endDate: formatDateLocal(goal.endDate),
   };
@@ -39,9 +48,17 @@ export async function GET() {
       where: { userId: user.id },
       orderBy: { createdAt: "desc" },
     });
+    const completedCountMap = await getCompletedCountMap(
+      goals.map((goal) => goal.id)
+    );
 
     return NextResponse.json({
-      goals: goals.map(mapGoal),
+      goals: goals.map((goal) =>
+        mapGoal({
+          goal,
+          completedCount: completedCountMap.get(goal.id) ?? 0,
+        })
+      ),
     });
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
@@ -102,7 +119,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({
-      goal: mapGoal(goal),
+      goal: mapGoal({ goal, completedCount: 0 }),
     });
   } catch (error) {
     if (error instanceof InvalidTargetCountError) {

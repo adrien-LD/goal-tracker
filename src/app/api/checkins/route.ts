@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { resolveGoalTargetCount } from "@/lib/goal-target-count";
+import { getCompletedCountMap } from "@/lib/goal-progress";
 
 type DateFilter = {
   date: string;
@@ -15,11 +16,6 @@ type DateFilter = {
 type DateFilterResult = {
   errorMessage: string | null;
   filter: DateFilter | null;
-};
-
-type CompletedCountRow = {
-  goalId: string;
-  _count: { _all: number };
 };
 
 type CheckInWithGoal = {
@@ -73,13 +69,6 @@ function resolveDateFilter(url: URL): DateFilterResult {
   };
 }
 
-function buildCompletedCountMap(rows: CompletedCountRow[]) {
-  return rows.reduce((map, row) => {
-    map.set(row.goalId, row._count._all);
-    return map;
-  }, new Map<string, number>());
-}
-
 function mapCheckIns(
   checkIns: CheckInWithGoal[],
   completedCountMap: Map<string, number>
@@ -127,20 +116,7 @@ export async function GET(request: Request) {
     });
 
     const goalIds = Array.from(new Set(checkIns.map((checkIn) => checkIn.goalId)));
-    const completedCounts =
-      goalIds.length > 0
-        ? await prisma.checkIn.groupBy({
-            by: ["goalId"],
-            where: {
-              goalId: { in: goalIds },
-              completed: true,
-            },
-            _count: {
-              _all: true,
-            },
-          })
-        : [];
-    const completedCountMap = buildCompletedCountMap(completedCounts);
+    const completedCountMap = await getCompletedCountMap(goalIds);
 
     return NextResponse.json({
       checkIns: mapCheckIns(checkIns, completedCountMap),

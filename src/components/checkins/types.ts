@@ -18,3 +18,13 @@ export type CalendarDayModel = {
   inCurrentMonth: boolean;
   items: CheckIn[];
 };
+
+export type GoalProgressSummary = {
+  id: string;
+  title: string;
+  description: string;
+  targetCount: number;
+  completedCount: number;
+  startDate: string;
+  endDate: string;
+};
