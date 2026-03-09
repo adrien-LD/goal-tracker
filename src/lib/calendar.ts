@@ -1,6 +1,8 @@
 const DAYS_IN_WEEK = 7;
 const GRID_WEEKS = 6;
 const GRID_SIZE = DAYS_IN_WEEK * GRID_WEEKS;
+const MONTH_INDEX_OFFSET = 1;
+const FIRST_DAY_OF_MONTH = 1;
 
 export type CalendarLocale = "zh" | "en";
 
@@ -17,6 +19,15 @@ export function getMonthLabel(date: Date, locale: CalendarLocale): string {
     }
   );
   return formatter.format(date);
+}
+
+export function getCalendarDayLabel(date: Date, locale: CalendarLocale): string {
+  const day = date.getDate();
+  if (day !== FIRST_DAY_OF_MONTH) return String(day);
+
+  const month = date.getMonth() + MONTH_INDEX_OFFSET;
+  if (locale === "zh") return `${month}月${day}日`;
+  return `${month}/${day}`;
 }
 
 export function startOfWeekMonday(date: Date): Date {

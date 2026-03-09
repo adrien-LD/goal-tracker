@@ -3,11 +3,10 @@
 import { useMemo, useState } from "react";
 import { useI18n } from "@/components/i18n";
 import type { CalendarDayModel, CheckIn } from "@/components/checkins/types";
-import { getMonthLabel, isSameDate } from "@/lib/calendar";
+import { getCalendarDayLabel, getMonthLabel, isSameDate } from "@/lib/calendar";
 import { parseDateLocal } from "@/lib/date";
 
 const MAX_ITEMS_PER_DAY = 5;
-const MONTH_STEP = 1;
 
 type CheckinsCalendarDesktopProps = {
   calendarDays: CalendarDayModel[];
@@ -41,12 +40,6 @@ type CalendarDayCellProps = {
   setExpandedDate: (date: string | null) => void;
   updatingId: string | null;
 };
-
-function getDayLabel(day: Date, inCurrentMonth: boolean, locale: "zh" | "en") {
-  if (inCurrentMonth) return String(day.getDate());
-  if (locale === "zh") return `${day.getMonth() + MONTH_STEP}月${day.getDate()}日`;
-  return `${day.getMonth() + MONTH_STEP}/${day.getDate()}`;
-}
 
 function DayCheckInItem({
   checkIn,
@@ -136,7 +129,7 @@ function CalendarDayCell({
                 : "text-slate-400"
           }`}
         >
-          {getDayLabel(dayDate, day.inCurrentMonth, locale)}
+          {getCalendarDayLabel(dayDate, locale)}
         </span>
       </div>
       <div className="mt-2 space-y-1">
