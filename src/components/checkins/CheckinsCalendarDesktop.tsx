@@ -141,9 +141,6 @@ function CalendarDayCell({
             updatingId={updatingId}
           />
         ))}
-        {dayItems.length === 0 ? (
-          <div className="px-1 text-xs text-slate-400">{t("calendarEmptyDay")}</div>
-        ) : null}
       </div>
       {hiddenItems.length > 0 ? (
         <button
