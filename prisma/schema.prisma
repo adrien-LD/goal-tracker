@@ -8,12 +8,13 @@ datasource db {
 }
 
 model User {
-  id           String    @id @default(cuid())
-  username     String    @unique
-  passwordHash String
-  createdAt    DateTime  @default(now())
-  sessions     Session[]
-  goals        Goal[]
+  id                  String               @id @default(cuid())
+  username            String               @unique
+  passwordHash        String
+  createdAt           DateTime             @default(now())
+  sessions            Session[]
+  goals               Goal[]
+  weeklyGoalTemplates WeeklyGoalTemplate[]
 }
 
 model Session {
@@ -50,4 +51,34 @@ model CheckIn {
   goal Goal @relation(fields: [goalId], references: [id], onDelete: Cascade)
 
   @@unique([goalId, date])
+}
+
+model WeeklyGoalTemplate {
+  id          String               @id @default(cuid())
+  userId      String
+  title       String
+  description String
+  deletedAt   DateTime?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  user      User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  instances WeeklyGoalInstance[]
+}
+
+model WeeklyGoalInstance {
+  id                  String             @id @default(cuid())
+  templateId          String
+  titleSnapshot       String
+  descriptionSnapshot String
+  weekStartDate       String
+  weekEndDate         String
+  completed           Boolean            @default(false)
+  completedAt         DateTime?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  template WeeklyGoalTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@unique([templateId, weekStartDate])
 }

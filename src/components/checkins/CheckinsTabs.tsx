@@ -2,14 +2,20 @@
 
 import { useI18n } from "@/components/i18n";
 
-export type CheckinsTab = "checkins" | "dashboard";
+export type CheckinsTab = "checkins" | "dashboard" | "weekly";
 
 type CheckinsTabsProps = {
   activeTab: CheckinsTab;
   onChange: (tab: CheckinsTab) => void;
 };
 
-const TABS: readonly CheckinsTab[] = ["checkins", "dashboard"];
+const TABS: readonly CheckinsTab[] = ["checkins", "dashboard", "weekly"];
+
+function getTabLabel(tab: CheckinsTab, t: (key: "checkinsTabCalendar" | "checkinsTabDashboard" | "checkinsTabWeekly") => string) {
+  if (tab === "checkins") return t("checkinsTabCalendar");
+  if (tab === "dashboard") return t("checkinsTabDashboard");
+  return t("checkinsTabWeekly");
+}
 
 export default function CheckinsTabs({
   activeTab,
@@ -25,8 +31,7 @@ export default function CheckinsTabs({
     >
       {TABS.map((tab) => {
         const isActive = activeTab === tab;
-        const label =
-          tab === "checkins" ? t("checkinsTabCalendar") : t("checkinsTabDashboard");
+        const label = getTabLabel(tab, t);
 
         return (
           <button
