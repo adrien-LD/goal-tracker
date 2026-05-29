@@ -13,6 +13,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const { t, locale, setLocale } = useI18n();
   const [loggingOut, setLoggingOut] = useState(false);
   const isGoalsPage = pathname.startsWith("/goals");
+  const isStocksPage = pathname.startsWith("/stocks");
   const currentQuery = searchParams.toString();
   const currentPath =
     currentQuery.length > 0 ? `${pathname}?${currentQuery}` : pathname;
@@ -41,6 +42,28 @@ export default function AppShell({ children }: { children: ReactNode }) {
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4">
           <span className="text-lg font-semibold text-ink">{t("appName")}</span>
           <div className="flex items-center gap-3">
+            <nav className="hidden items-center gap-2 text-sm font-medium md:flex">
+              <Link
+                href="/checkins"
+                className={`rounded-full px-3 py-1 transition ${
+                  pathname.startsWith("/checkins")
+                    ? "bg-ink text-white"
+                    : "text-slate-500 hover:text-ink"
+                }`}
+              >
+                {t("navCheckins")}
+              </Link>
+              <Link
+                href="/stocks"
+                className={`rounded-full px-3 py-1 transition ${
+                  isStocksPage
+                    ? "bg-ink text-white"
+                    : "text-slate-500 hover:text-ink"
+                }`}
+              >
+                {t("navStockScreen")}
+              </Link>
+            </nav>
             <div className="flex items-center gap-2 text-xs font-medium">
               <span className="hidden text-slate-500 md:inline">
                 {t("language")}
