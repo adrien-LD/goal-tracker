@@ -155,3 +155,26 @@ test("buildAiStockScreeningPayload returns parsed rules, ranked results, warning
   assert.equal(payload.meta.matchedCount, 1);
   assert.equal(payload.meta.asOf, "2026-05-29T08:00:00.000Z");
 });
+
+test("buildAiStockScreeningPayload skips rules unsupported by the selected provider", async () => {
+  const payload = await buildAiStockScreeningPayload({
+    query: "市盈率低于10，涨幅大于1%",
+    market: "cn",
+    limit: 5,
+    dataProvider: {
+      loadStocks: async () => STOCKS,
+      sourceName: "mootdx",
+      supportedMetrics: ["pct_chg"],
+    },
+    ruleParser: parseStockScreeningQuery,
+    now: new Date("2026-05-29T08:00:00.000Z"),
+  });
+
+  assert.deepEqual(payload.parsedRules.rules, [
+    { metric: "pct_chg", operator: ">", value: 1, unit: "%" },
+  ]);
+  assert.deepEqual(payload.results.map((result) => result.code), ["600519"]);
+  assert.deepEqual(payload.warnings, [
+    "mootdx does not support PE(TTM); skipped that rule.",
+  ]);
+});

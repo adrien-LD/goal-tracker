@@ -37,6 +37,7 @@ export type StockScreeningResult = StockSnapshot & {
 
 export type StockDataProvider = {
   readonly sourceName: string;
+  readonly supportedMetrics?: readonly StockMetricKey[];
   loadStocks: () => Promise<readonly StockSnapshot[]>;
 };
 
@@ -84,6 +85,10 @@ const METRIC_DEFINITIONS: Record<StockMetricKey, MetricDefinition> = {
   pct_chg: { label: "Change", unit: "%" },
   dividend_yield: { label: "Dividend yield", unit: "%" },
 };
+
+function getMetricLabel(metric: StockMetricKey) {
+  return METRIC_DEFINITIONS[metric].label;
+}
 
 const UNSUPPORTED_METRIC_WARNINGS = [
   {
@@ -297,24 +302,47 @@ export async function buildAiStockScreeningPayload({
   ruleParser = parseStockScreeningQuery,
 }: BuildAiStockScreeningPayloadOptions): Promise<AiStockScreeningPayload> {
   const parsedRules = ruleParser(query);
+  const supportedMetrics = dataProvider.supportedMetrics
+    ? new Set(dataProvider.supportedMetrics)
+    : null;
+  const executableRules = supportedMetrics
+    ? parsedRules.rules.filter((rule) => supportedMetrics.has(rule.metric))
+    : parsedRules.rules;
+  const unsupportedWarnings = supportedMetrics
+    ? parsedRules.rules.flatMap((rule) =>
+        supportedMetrics.has(rule.metric)
+          ? []
+          : [
+              `${dataProvider.sourceName} does not support ${getMetricLabel(
+                rule.metric
+              )}; skipped that rule.`,
+            ]
+      )
+    : [];
+  const executableParsedRules = {
+    ...parsedRules,
+    rules: executableRules,
+  };
   const stocks = await dataProvider.loadStocks();
-  const filter = compileStockScreeningRules(parsedRules.rules);
-  const warnings = [...parsedRules.warnings];
+  const filter = compileStockScreeningRules(executableRules);
+  const warnings = [...parsedRules.warnings, ...unsupportedWarnings];
   const results: StockScreeningResult[] = [];
 
-  for (const stock of stocks) {
-    const filtered = filter(stock);
-    if (filtered.warnings.length) warnings.push(...filtered.warnings);
-    if (!filtered.matched) continue;
+  if (executableRules.length) {
+    for (const stock of stocks) {
+      const filtered = filter(stock);
+      if (filtered.warnings.length) warnings.push(...filtered.warnings);
+      if (!filtered.matched) continue;
 
-    results.push({
-      ...stock,
-      matchedReasons: filtered.reasons,
-    });
+      results.push({
+        ...stock,
+        matchedReasons: filtered.reasons,
+      });
+    }
   }
 
   return {
-    parsedRules,
+    parsedRules: executableParsedRules,
     results: results.slice(0, limit),
     warnings: Array.from(new Set(warnings)),
     meta: {

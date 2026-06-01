@@ -6,7 +6,7 @@ ENV PATH="$PNPM_HOME:$PATH"
 WORKDIR /app
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && apt-get install -y --no-install-recommends openssl ca-certificates python3 python3-pip \
   && rm -rf /var/lib/apt/lists/* \
   && corepack enable
 
@@ -35,6 +35,8 @@ ENV PORT=3000
 ENV DATABASE_URL="file:/data/dev.db"
 
 COPY --from=builder /app ./
+
+RUN python3 -m pip install --break-system-packages --no-cache-dir -r requirements.txt
 
 EXPOSE 3000
 

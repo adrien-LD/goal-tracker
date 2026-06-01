@@ -13,7 +13,7 @@ import { createDefaultStockDataProvider } from "./stock-screening-provider";
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 100;
-const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
+const DEFAULT_OPENAI_BASE_URL = "https://api.openai.com/v1";
 const DEFAULT_OPENAI_MODEL = "gpt-4.1-mini";
 
 type Fetcher = typeof fetch;
@@ -32,6 +32,7 @@ export type NormalizedStockScreeningRequest = {
 
 type CreateOpenAiRuleParserOptions = {
   readonly apiKey: string;
+  readonly baseUrl?: string;
   readonly model?: string;
   readonly fetcher?: Fetcher;
 };
@@ -177,11 +178,13 @@ export function normalizeStockScreeningRequest(
 
 export function createOpenAiRuleParser({
   apiKey,
+  baseUrl = DEFAULT_OPENAI_BASE_URL,
   fetcher = fetch,
   model = DEFAULT_OPENAI_MODEL,
 }: CreateOpenAiRuleParserOptions) {
   return async (query: string): Promise<ParsedStockScreeningRules> => {
-    const response = await fetcher(OPENAI_RESPONSES_URL, {
+    const normalizedBaseUrl = baseUrl.replace(/\/+$/, "");
+    const response = await fetcher(`${normalizedBaseUrl}/responses`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,

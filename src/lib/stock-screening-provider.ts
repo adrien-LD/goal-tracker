@@ -1,6 +1,9 @@
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import {
   mapEastmoneySnapshot,
   type StockDataProvider,
+  type StockMetricKey,
   type StockSnapshot,
 } from "./stock-screening";
 
@@ -10,8 +13,23 @@ type EastmoneyListResponse = {
   };
 };
 
+type MootdxProviderOptions = {
+  readonly command?: string;
+  readonly scriptPath?: string;
+  readonly runCommand?: CommandRunner;
+};
+
+type CommandRunner = (
+  command: string,
+  args: readonly string[]
+) => Promise<string>;
+
+const execFileAsync = promisify(execFile);
+
 const EASTMONEY_QUOTE_URL =
   "https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=300&po=1&np=1&fltt=2&invt=2&fid=f3&fs=m:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23&fields=f12,f14,f2,f3,f162,f167,f173";
+const MOOTDX_SCRIPT_PATH = "scripts/mootdx_stock_provider.py";
+const MOOTDX_SUPPORTED_METRICS: readonly StockMetricKey[] = ["pct_chg"];
 
 const DEMO_STOCKS: readonly StockSnapshot[] = [
   {
@@ -93,9 +111,56 @@ export function createEastmoneyStockDataProvider(
   };
 }
 
+function isStockSnapshot(value: unknown): value is StockSnapshot {
+  if (!value || typeof value !== "object") return false;
+  const stock = value as StockSnapshot;
+  return (
+    typeof stock.code === "string" &&
+    typeof stock.name === "string" &&
+    stock.market === "cn" &&
+    typeof stock.industry === "string" &&
+    (typeof stock.latestPrice === "number" || stock.latestPrice === null) &&
+    Boolean(stock.metrics) &&
+    typeof stock.metrics === "object"
+  );
+}
+
+function parseMootdxOutput(output: string) {
+  const value = JSON.parse(output) as unknown;
+  if (!Array.isArray(value)) {
+    throw new Error("Mootdx provider returned invalid stock data");
+  }
+  return value.filter(isStockSnapshot);
+}
+
+async function runExecFile(command: string, args: readonly string[]) {
+  const { stdout } = await execFileAsync(command, [...args], {
+    maxBuffer: 16 * 1024 * 1024,
+  });
+  return stdout;
+}
+
+export function createMootdxStockDataProvider({
+  command = process.env.MOOTDX_PYTHON || "python3",
+  runCommand = runExecFile,
+  scriptPath = MOOTDX_SCRIPT_PATH,
+}: MootdxProviderOptions = {}): StockDataProvider {
+  return {
+    sourceName: "mootdx",
+    supportedMetrics: MOOTDX_SUPPORTED_METRICS,
+    loadStocks: async () => {
+      const output = await runCommand(command, [scriptPath]);
+      return parseMootdxOutput(output);
+    },
+  };
+}
+
 export function createDefaultStockDataProvider(): StockDataProvider {
   if (process.env.STOCK_SCREENING_PROVIDER === "demo") {
     return createDemoStockDataProvider();
   }
-  return createEastmoneyStockDataProvider();
+  if (process.env.STOCK_SCREENING_PROVIDER === "eastmoney") {
+    return createEastmoneyStockDataProvider();
+  }
+  return createMootdxStockDataProvider();
 }

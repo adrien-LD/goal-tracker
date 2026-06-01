@@ -73,6 +73,32 @@ test("createOpenAiRuleParser parses the first JSON object from a model response"
   } satisfies ParsedStockScreeningRules);
 });
 
+test("createOpenAiRuleParser supports OpenAI-compatible base URLs", async () => {
+  const parser = createOpenAiRuleParser({
+    apiKey: "test-key",
+    baseUrl: "https://openai-compatible.test/v1/",
+    fetcher: async (url) => {
+      assert.equal(String(url), "https://openai-compatible.test/v1/responses");
+      return new Response(
+        JSON.stringify({
+          output_text: JSON.stringify({
+            logic: "AND",
+            rules: [],
+            warnings: ["ok"],
+          }),
+        }),
+        { status: 200 }
+      );
+    },
+  });
+
+  assert.deepEqual(await parser("任意规则"), {
+    logic: "AND",
+    rules: [],
+    warnings: ["ok"],
+  } satisfies ParsedStockScreeningRules);
+});
+
 test("createStockScreeningPayload falls back to deterministic parsing when AI parsing fails", async () => {
   const provider: StockDataProvider = {
     sourceName: "fixture",

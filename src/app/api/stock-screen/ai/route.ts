@@ -13,6 +13,7 @@ export async function POST(request: Request) {
     const aiRuleParser = apiKey
       ? createOpenAiRuleParser({
           apiKey,
+          baseUrl: process.env.OPENAI_BASE_URL,
           model: process.env.OPENAI_STOCK_SCREENING_MODEL,
         })
       : undefined;
