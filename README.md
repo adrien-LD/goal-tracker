@@ -1,6 +1,6 @@
 # Goal Tracker
 
-一个基于 Next.js 14、Prisma 和 SQLite 的轻量目标管理应用，支持账号注册登录、日目标管理、每日打卡、每周重复目标、历史周记录、进度统计，以及中英文双语界面切换。
+一个基于 Next.js 14、Prisma 和 SQLite 的轻量目标管理应用，支持账号注册登录、日目标管理、每日打卡、每周重复目标、金额阶段赚钱计划、历史周记录、进度统计，以及中英文双语界面切换。
 
 ## 项目概览
 
@@ -23,6 +23,7 @@
 - 对当前周和历史周的周目标进行补记/取消补记
 - 桌面端月历视图 + 移动端列表视图
 - 进度环展示每个目标的完成比例
+- 金额阶梯赚钱计划（服务端存储当前金额、阶段动作勾选、变更历史）
 - 中英文界面一键切换
 
 ## 用户流程
@@ -59,6 +60,7 @@
 - `/register`：注册页，注册成功后自动创建会话
 - `/goals`：日目标列表和日目标表单，支持新增、编辑、删除
 - `/checkins`：目标执行页，包含每日打卡、日目标数据看板、周目标管理与历史周记录
+- `/money`：金额阶段赚钱计划，首次进入自动创建默认八月 7 档计划（79k→148k）
 
 ### 核心模块
 
@@ -113,6 +115,12 @@ Prisma Schema 位于 `prisma/schema.prisma`，核心模型如下：
 - 以快照形式保留每个自然周的标题与描述
 - 唯一约束：`@@unique([templateId, weekStartDate])`
 
+### `MoneyPlan` / `MoneyStage` / `MoneyStageAction` / `MoneyAmountLog`
+
+- 金额阶梯计划：计划主表、阶段、阶段动作勾选、金额变更日志
+- `MoneyPlan.currentAmount` 为服务端权威金额；每次更新写入 `MoneyAmountLog`
+- 首次 `GET /api/money-plans` 时若无计划则自动 seed 默认八月计划
+
 ## API 概览
 
 | 方法 | 路径 | 说明 |
@@ -131,6 +139,11 @@ Prisma Schema 位于 `prisma/schema.prisma`，核心模型如下：
 | `PATCH` | `/api/weekly-goals/templates/[id]` | 更新模板，并同步改写本周实例快照 |
 | `DELETE` | `/api/weekly-goals/templates/[id]` | 停止模板继续重复，保留历史与本周记录 |
 | `PATCH` | `/api/weekly-goals/instances/[id]` | 更新某个自然周实例的完成状态 |
+| `GET` | `/api/money-plans` | 获取或自动创建当前用户的赚钱计划（含阶段、动作、最近变更） |
+| `GET` | `/api/money-plans/[id]` | 获取指定计划详情 |
+| `PATCH` | `/api/money-plans/[id]` | 更新当前金额（可选 note），写入变更日志 |
+| `POST` | `/api/money-plans/[id]/reset` | 重置到起点金额并清空动作勾选 |
+| `PATCH` | `/api/money-stage-actions/[id]` | 勾选/取消阶段动作 |
 
 ### API 设计特点
 

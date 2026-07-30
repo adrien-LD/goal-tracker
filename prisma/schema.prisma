@@ -15,6 +15,7 @@ model User {
   sessions            Session[]
   goals               Goal[]
   weeklyGoalTemplates WeeklyGoalTemplate[]
+  moneyPlans          MoneyPlan[]
 }
 
 model Session {
@@ -81,4 +82,63 @@ model WeeklyGoalInstance {
   template WeeklyGoalTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
 
   @@unique([templateId, weekStartDate])
+}
+
+model MoneyPlan {
+  id            String   @id @default(cuid())
+  userId        String
+  title         String
+  startAmount   Int
+  finalAmount   Int
+  deadline      DateTime
+  currentAmount Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stages MoneyStage[]
+  logs   MoneyAmountLog[]
+
+  @@index([userId])
+}
+
+model MoneyStage {
+  id           String @id @default(cuid())
+  planId       String
+  order        Int
+  title        String
+  targetAmount Int
+  windowStart  String
+  windowEnd    String
+  deltaLabel   String
+  failLine     String
+
+  plan    MoneyPlan          @relation(fields: [planId], references: [id], onDelete: Cascade)
+  actions MoneyStageAction[]
+
+  @@unique([planId, order])
+}
+
+model MoneyStageAction {
+  id      String  @id @default(cuid())
+  stageId String
+  order   Int
+  text    String
+  done    Boolean @default(false)
+
+  stage MoneyStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
+
+  @@unique([stageId, order])
+}
+
+model MoneyAmountLog {
+  id        String   @id @default(cuid())
+  planId    String
+  amount    Int
+  note      String?
+  createdAt DateTime @default(now())
+
+  plan MoneyPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@index([planId, createdAt])
 }

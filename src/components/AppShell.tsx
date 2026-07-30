@@ -6,6 +6,18 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 import { useI18n } from "@/components/i18n";
 
+function navClass(active: boolean) {
+  return `rounded-full px-3 py-1 transition ${
+    active ? "bg-ink text-white" : "text-slate-500 hover:text-ink"
+  }`;
+}
+
+function mobileNavClass(active: boolean) {
+  return `flex flex-1 flex-col items-center gap-0.5 rounded-xl px-2 py-2 text-[11px] font-medium transition ${
+    active ? "bg-ink text-white" : "text-slate-500"
+  }`;
+}
+
 export default function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -14,6 +26,8 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const [loggingOut, setLoggingOut] = useState(false);
   const isGoalsPage = pathname.startsWith("/goals");
   const isStocksPage = pathname.startsWith("/stocks");
+  const isMoneyPage = pathname.startsWith("/money");
+  const isCheckinsPage = pathname.startsWith("/checkins");
   const currentQuery = searchParams.toString();
   const currentPath =
     currentQuery.length > 0 ? `${pathname}?${currentQuery}` : pathname;
@@ -43,24 +57,13 @@ export default function AppShell({ children }: { children: ReactNode }) {
           <span className="text-lg font-semibold text-ink">{t("appName")}</span>
           <div className="flex items-center gap-3">
             <nav className="hidden items-center gap-2 text-sm font-medium md:flex">
-              <Link
-                href="/checkins"
-                className={`rounded-full px-3 py-1 transition ${
-                  pathname.startsWith("/checkins")
-                    ? "bg-ink text-white"
-                    : "text-slate-500 hover:text-ink"
-                }`}
-              >
+              <Link href="/checkins" className={navClass(isCheckinsPage)}>
                 {t("navCheckins")}
               </Link>
-              <Link
-                href="/stocks"
-                className={`rounded-full px-3 py-1 transition ${
-                  isStocksPage
-                    ? "bg-ink text-white"
-                    : "text-slate-500 hover:text-ink"
-                }`}
-              >
+              <Link href="/money" className={navClass(isMoneyPage)}>
+                {t("navMoney")}
+              </Link>
+              <Link href="/stocks" className={navClass(isStocksPage)}>
                 {t("navStockScreen")}
               </Link>
             </nav>
@@ -85,12 +88,40 @@ export default function AppShell({ children }: { children: ReactNode }) {
           </div>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-6xl px-4 py-8">{children}</main>
+
+      <main className="mx-auto w-full max-w-6xl px-4 py-8 pb-24 md:pb-8">
+        {children}
+      </main>
+
+      <nav
+        className="fixed inset-x-0 bottom-0 z-20 border-t border-cloud bg-white/95 px-3 py-2 backdrop-blur md:hidden"
+        aria-label="Mobile"
+      >
+        <div className="mx-auto flex max-w-6xl gap-1">
+          <Link href="/checkins" className={mobileNavClass(isCheckinsPage)}>
+            <span aria-hidden="true">✓</span>
+            {t("navCheckins")}
+          </Link>
+          <Link href="/money" className={mobileNavClass(isMoneyPage)}>
+            <span aria-hidden="true">¥</span>
+            {t("navMoney")}
+          </Link>
+          <Link href="/stocks" className={mobileNavClass(isStocksPage)}>
+            <span aria-hidden="true">↗</span>
+            {t("navStockScreen")}
+          </Link>
+          <Link href="/goals" className={mobileNavClass(isGoalsPage)}>
+            <span aria-hidden="true">◎</span>
+            {t("navGoals")}
+          </Link>
+        </div>
+      </nav>
+
       <Link
         href={actionHref}
         aria-label={actionLabel}
         title={actionLabel}
-        className={`fixed bottom-5 right-5 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full border bg-white/70 text-slate-500 shadow-soft backdrop-blur transition hover:border-slate-400 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/30 md:bottom-6 md:right-8 ${
+        className={`fixed bottom-20 right-5 z-20 hidden h-10 w-10 items-center justify-center rounded-full border bg-white/70 text-slate-500 shadow-soft backdrop-blur transition hover:border-slate-400 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/30 md:bottom-6 md:right-8 md:inline-flex ${
           isGoalsPage
             ? "border-slate-400 bg-white/85 text-ink"
             : "border-cloud"
