@@ -15,6 +15,7 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 50
     env:
       DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
       DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
@@ -111,5 +112,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ssh -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOST}" \
+          echo "Remote deployment started at $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          ssh \
+            -o BatchMode=yes \
+            -o ConnectTimeout=15 \
+            -o ServerAliveInterval=30 \
+            -o ServerAliveCountMax=6 \
+            -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOST}" \
             "cd '${DEPLOY_PATH}' && chmod +x deploy/remote-deploy.sh deploy/backup-sqlite.sh && ./deploy/remote-deploy.sh"
+          echo "Remote deployment finished at $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
