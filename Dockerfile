@@ -8,8 +8,7 @@ WORKDIR /app
 RUN apt-get update \
   && apt-get install -y --no-install-recommends openssl ca-certificates python3 python3-pip \
   && rm -rf /var/lib/apt/lists/* \
-  && corepack enable \
-  && corepack prepare pnpm@10.17.0 --activate
+  && corepack enable
 
 FROM base AS deps
 
