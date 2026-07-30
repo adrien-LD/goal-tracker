@@ -8,7 +8,8 @@ WORKDIR /app
 RUN apt-get update \
   && apt-get install -y --no-install-recommends openssl ca-certificates python3 python3-pip \
   && rm -rf /var/lib/apt/lists/* \
-  && corepack enable
+  && corepack enable \
+  && corepack prepare pnpm@10.17.0 --activate
 
 FROM base AS deps
 
@@ -17,7 +18,7 @@ ENV DATABASE_URL="file:./prisma/dev.db"
 COPY package.json pnpm-lock.yaml ./
 COPY prisma ./prisma
 
-RUN pnpm install --no-frozen-lockfile && pnpm prisma generate
+RUN pnpm install --frozen-lockfile && pnpm prisma generate
 
 FROM base AS builder
 
