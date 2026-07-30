@@ -1,11 +1,14 @@
 FROM node:20-bookworm-slim AS base
 
+ARG DEBIAN_MIRROR=http://mirrors.cloud.tencent.com
+
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 
 WORKDIR /app
 
-RUN apt-get update \
+RUN sed -i "s|http://deb.debian.org|${DEBIAN_MIRROR}|g" /etc/apt/sources.list.d/debian.sources \
+  && apt-get -o Acquire::Retries=3 update \
   && apt-get install -y --no-install-recommends openssl ca-certificates python3 python3-pip \
   && rm -rf /var/lib/apt/lists/* \
   && corepack enable
