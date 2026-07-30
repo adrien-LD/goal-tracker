@@ -206,14 +206,12 @@ Prisma Schema 位于 `prisma/schema.prisma`，核心模型如下：
 
 - Node.js 20+
 - pnpm
-- Python 3（AI 选股默认数据源 `mootdx` 需要）
 
 ### 启动步骤
 
 ```bash
 cp .env.example .env
 pnpm install
-pnpm setup:mootdx
 npx prisma db push
 pnpm dev
 ```
@@ -250,11 +248,6 @@ npx prisma db push
 | `NODE_ENV` | 运行环境 |
 | `PORT` | 服务端口 |
 | `SESSION_COOKIE_SECURE` | 是否为 Cookie 打开 `Secure` 标记 |
-| `OPENAI_API_KEY` | 可选，AI 选股规则解析使用的 OpenAI API Key；为空时使用本地规则解析 |
-| `OPENAI_BASE_URL` | OpenAI 或兼容服务的 API Base URL，默认 `https://api.openai.com/v1` |
-| `OPENAI_STOCK_SCREENING_MODEL` | AI 选股规则解析模型 |
-| `STOCK_SCREENING_PROVIDER` | 选股数据源，默认使用 `mootdx`；如需演示数据可设为 `demo`，如需东方财富快照可设为 `eastmoney` |
-| `MOOTDX_PYTHON` | 运行 Mootdx 桥接脚本的 Python 命令，默认 `python3` |
 
 本地默认示例：
 
@@ -263,21 +256,6 @@ DATABASE_URL=file:./dev.db
 NODE_ENV=production
 PORT=3000
 SESSION_COOKIE_SECURE=false
-OPENAI_API_KEY=
-OPENAI_BASE_URL=https://api.openai.com/v1
-OPENAI_STOCK_SCREENING_MODEL=gpt-4.1-mini
-STOCK_SCREENING_PROVIDER=mootdx
-MOOTDX_PYTHON=python3
-```
-
-### AI 选股数据源
-
-默认真实数据源为 `mootdx`。服务端会调用 `scripts/mootdx_stock_provider.py`，通过 Mootdx 拉取 A 股列表和实时行情，再输出给 Next.js 的 `StockDataProvider`。Mootdx 当前用于行情类指标，支持涨跌幅筛选；PE、PB、股息率、市值等基本面规则会被识别并提示“当前数据源不支持”，不会回退模拟值。
-
-本地首次使用前需要安装 Python 依赖：
-
-```bash
-pnpm setup:mootdx
 ```
 
 ## 部署说明
@@ -313,11 +291,6 @@ NODE_ENV=production
 PORT=3000
 DATABASE_URL=file:/data/dev.db
 SESSION_COOKIE_SECURE=false
-OPENAI_API_KEY=
-OPENAI_BASE_URL=https://api.openai.com/v1
-OPENAI_STOCK_SCREENING_MODEL=gpt-4.1-mini
-STOCK_SCREENING_PROVIDER=mootdx
-MOOTDX_PYTHON=python3
 ```
 
 ## 旧数据回填

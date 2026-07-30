@@ -9,7 +9,7 @@ WORKDIR /app
 
 RUN sed -i "s|http://deb.debian.org|${DEBIAN_MIRROR}|g" /etc/apt/sources.list.d/debian.sources \
   && apt-get -o Acquire::Retries=3 update \
-  && apt-get install -y --no-install-recommends openssl ca-certificates python3 python3-pip \
+  && apt-get install -y --no-install-recommends openssl ca-certificates \
   && rm -rf /var/lib/apt/lists/* \
   && corepack enable
 
@@ -38,8 +38,6 @@ ENV PORT=3000
 ENV DATABASE_URL="file:/data/dev.db"
 
 COPY --from=builder /app ./
-
-RUN python3 -m pip install --break-system-packages --no-cache-dir -r requirements.txt
 
 EXPOSE 3000
 

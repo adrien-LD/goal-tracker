@@ -25,7 +25,6 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const { t, locale, setLocale } = useI18n();
   const [loggingOut, setLoggingOut] = useState(false);
   const isGoalsPage = pathname.startsWith("/goals");
-  const isStocksPage = pathname.startsWith("/stocks");
   const isMoneyPage = pathname.startsWith("/money");
   const isCheckinsPage = pathname.startsWith("/checkins");
   const currentQuery = searchParams.toString();
@@ -62,9 +61,6 @@ export default function AppShell({ children }: { children: ReactNode }) {
               </Link>
               <Link href="/money" className={navClass(isMoneyPage)}>
                 {t("navMoney")}
-              </Link>
-              <Link href="/stocks" className={navClass(isStocksPage)}>
-                {t("navStockScreen")}
               </Link>
             </nav>
             <div className="flex items-center gap-2 text-xs font-medium">
@@ -105,10 +101,6 @@ export default function AppShell({ children }: { children: ReactNode }) {
           <Link href="/money" className={mobileNavClass(isMoneyPage)}>
             <span aria-hidden="true">¥</span>
             {t("navMoney")}
-          </Link>
-          <Link href="/stocks" className={mobileNavClass(isStocksPage)}>
-            <span aria-hidden="true">↗</span>
-            {t("navStockScreen")}
           </Link>
           <Link href="/goals" className={mobileNavClass(isGoalsPage)}>
             <span aria-hidden="true">◎</span>

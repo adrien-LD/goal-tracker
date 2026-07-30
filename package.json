@@ -9,7 +9,6 @@
     "start": "next start",
     "lint": "next lint",
     "test": "tsx --test \"src/**/*.test.ts\"",
-    "setup:mootdx": "python3 -m pip install -r requirements.txt",
     "prisma": "prisma"
   },
   "dependencies": {
